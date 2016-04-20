@@ -1,0 +1,70 @@
+views.py:
+
+def index(request):
+    latest_question_list = [Question() for i in range(100)]
+    context = {'latest_question_list': latest_question_list}
+    return render(request, 'index.html', context)    
+    
+def detail(request, question_id):
+    return HttpResponse("You're looking at question %s." % question_id)
+
+def results(request, question_id):
+    response = "You're looking at the results of question %s."
+    return HttpResponse(response % question_id)
+
+def vote(request, question_id):
+    return HttpResponse("You're voting on question %s." % question_id)    
+    
+    
+forms.py:
+from django import forms
+
+class ContactForm(forms.Form):
+    name = forms.CharField()
+    message = forms.CharField(widget=forms.Textarea)
+
+    def send_email(self):
+        # send email using the self.cleaned_data dictionary
+        pass
+    
+    
+class UserForm(forms.Form):
+    h = forms.CharField()
+    p = forms.CharField()
+    a = forms.CharField()
+    w = forms.CharField()
+    
+    def check_form(self):
+        pass
+        
+        
+index.html:
+
+  <div class="form-group">
+    <label for="elP">P</label>
+    <input type="text" class="form-control" id="elP" placeholder="P" name="p">
+  </div>
+  <div class="form-group">
+    <label for="elP">A</label>
+    <input type="text" class="form-control" id="elP" placeholder="A" name="a">
+  </div>
+  <div class="form-group">
+    <label for="elP">W</label>
+    <input type="text" class="form-control" id="elP" placeholder="W" name="w">
+  </div>                      
+
+
+class Question:
+    id = 0
+    question_text = "text"
+    
+class UserView(FormView):
+    template_name = 'index.html'
+    form_class = UserForm
+    success_url = '/index'
+    
+    def form_valid(self, form):
+        # This method is called when valid form data has been POSTed.
+        # It should return an HttpResponse.
+        form.send_email()
+        return super(UserView, self).form_valid(form)
