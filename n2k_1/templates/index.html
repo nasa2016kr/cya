@@ -1,51 +1,343 @@
-<!DOCTYPE html>
+{% load staticfiles %}
 <html>
-    
-    <style>
-        .resultBox {
-            text-align: center;
-            vertical-align: middle;
-            font-size: 38px;
-        }
-        
-        .resultFail {
-            color: red;
-        }
-        
-        .resultSuccess {
-            color: green;
-        }
-        
+  <head>
+    <title>3D Interactive Asteroid Space Visualization - Asterank</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+    <link href="static/css/full3d.css" rel="stylesheed">
+
+    <script>
+      window.passthrough_vars = {
+      }
+    </script>    
+
+
+    <style type="text/css">
+      body {
+        margin: 0px !important;
+      }
     </style>
-    
-    <head>
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" type="text/css" />
-    </head>
-    <body>
-        <div class="container">
-            <h1>Check your asteroid!</h1>
-            
-            <div class="row">
-                <div class="col-md-6 col-xs-6">
-                    <div class="col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1">
-                        <form action="" method="post">
-                          {% csrf_token %}
-                          <div class="form-group">
-                            <label for="elH">H</label>
-                            <input type="text" class="form-control" id="elH" placeholder="H" name="h" value="{{ h }}">
-                          </div>
-                          <button type="submit" class="btn btn-primary pull-right">Check</button>
-                        </form>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="resultBox {{ resultClass }}">
-                        {{ result }}
-                    </div>
-                </div>                
+  </head>
+<body>
+  <noscript>Sorry, this page requires Canvas/WebGL, so you'll need to enable JavaScript.</noscript>
+
+<script type="x-shader/x-vertex" id="vertexshader">
+    // MIT License.
+    // Copyright Ian Webster 2012 (asterank.com)
+    // https://github.com/typpo/asterank/blob/master/LICENSE
+    #define pi 3.141592653589793238462643383279
+    attribute vec3 value_color;
+    varying vec3 vColor;
+    attribute float size;
+    uniform float earth_i;
+    uniform float earth_om;
+    uniform float jed;
+    attribute float a;
+    attribute float e;
+    attribute float i;
+    attribute float o;
+    attribute float P;
+    attribute float ma;
+    attribute float n;
+    attribute float w;
+    attribute float epoch;
+    attribute float locked;
+    attribute float is_planet;
+    varying float vLocked;
+    varying float vPlanet;
+    vec3 getAstroPos() {
+      float i_rad = i * pi/180.0;
+      float o_rad = o * pi/180.0; // longitude of ascending node
+      float p_rad = w * pi/180.0; // LONGITUDE of perihelion
+      float ma_rad = ma * pi/180.0;
+      // Calculate mean anomaly at jed.
+      float n_rad;
+      if (n > 0.) {
+        n_rad = n * pi/180.0; // mean motion
+      } else {
+        n_rad = 2.0 * pi / P;
+      }
+      float d = jed - epoch;
+      float M = ma_rad + n_rad * d;
+      // Estimate eccentric and true anom using iterative approx.
+      float E0 = M;
+      float E1;
+      float lastdiff;
+      // converted do/while:
+      for (int iter=0; iter < 1000; iter++) {
+        E1 = M + e * sin(E0);
+        lastdiff = abs(E1-E0);
+        E0 = E1;
+        if (lastdiff < 0.0000001) {
+          break;
+        }
+      }
+      float E = E0;
+      float v = 2.0 * atan(sqrt((1.0+e)/(1.0-e)) * tan(E/2.0));
+      // radius vector, in AU
+      float r = a * (1.0 - e*e) / (1.0 + e * cos(v)) * 50.;  // 50 pixels per AU
+      // heliocentric coords
+      float X = r * (cos(o_rad) * cos(v + p_rad - o_rad) - sin(o_rad) * sin(v + p_rad - o_rad) * cos(i_rad));
+      float Y = r * (sin(o_rad) * cos(v + p_rad - o_rad) + cos(o_rad) * sin(v + p_rad - o_rad) * cos(i_rad));
+      float Z = r * (sin(v + p_rad - o_rad) * sin(i_rad));
+      return vec3(X, Y, Z);
+    }
+    void main() {
+      vColor = value_color;
+      vLocked = locked;
+      vPlanet = is_planet;
+      vec3 newpos = getAstroPos();
+      vec4 mvPosition = modelViewMatrix * vec4(newpos, 1.0);
+      gl_Position = projectionMatrix * mvPosition;
+      gl_PointSize = size;
+    }
+</script>
+<script type="x-shader/x-fragment" id="fragmentshader">
+    // MIT License.
+    // Copyright Ian Webster 2012 (asterank.com)
+    // https://github.com/typpo/asterank/blob/master/LICENSE
+    varying vec3 vColor;
+    varying float vLocked;
+    varying float vPlanet;
+    uniform sampler2D planet_texture;
+    uniform sampler2D small_roid_texture;
+    uniform sampler2D small_roid_circled_texture;
+    void main() {
+      if (vLocked < .5) {
+        if (vPlanet < .5) {
+          gl_FragColor = vec4(vColor, 1.0) * texture2D(small_roid_texture,
+            vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y));
+        }
+        else {
+          gl_FragColor = vec4(vColor, 1.0) * texture2D(planet_texture,
+            vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y));
+        }
+      }
+      else {
+        gl_FragColor = vec4(vColor, 1.0) * texture2D(small_roid_circled_texture,
+          vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y));
+      }
+    }
+</script>
+
+<script type="application/x-glsl" id="sky-vertex">
+varying vec2 vUV;
+varying float vDensity;
+varying float vDiff;
+void main() {
+  vUV = uv;
+  vec4 pos = vec4(position, 1.0);
+  gl_Position = projectionMatrix * modelViewMatrix * pos;
+}
+</script>
+
+<script type="application/x-glsl" id="sky-density">
+uniform sampler2D texture;
+varying vec2 vUV;
+void main() {
+  vec4 sample = texture2D(texture, vUV);
+  gl_FragColor = vec4(sample.xyz, sample.w);
+}
+</script>
+
+  <!-- three.js container -->
+  <div id="container"></div>
+  <!-- info on screen display -->
+  <div id="loading">
+    <!--<img src="/images/loader.gif"/> Loading <span id="loading-text"></span>...-->
+    <img src="http://www.asterank.com/static/img/loader.gif"/> Loading asteroids from database...
+  </div>
+  <div id="not-supported" style="display:none;">
+    <p>
+    <strong>Sorry, your browser or graphics card doesn't support webgl.  Most features of the simulation will not be available.</strong>
+    </p>
+    <p>
+    You may be able to see the simulation if you..
+    </p>
+    <h2><a href="http://google.com/chrome">Get Chrome</a><br>or<br><a href="http://getfirefox.com">Get Firefox</a></h2>
+    <p>
+    <input type="submit" onClick="window.location='/3d/notsupported.html';" value="See video preview (recommended)"/><br>
+    <input type="submit" onClick="$('#not-supported').hide();return false;" value="Ignore for now"/>
+    </p>
+  </div>
+  <script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
+
+  <script type="text/javascript" src="{% static "js/3d/lib/three.js/three.min.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/3d/lib/three.js/three.min.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/3d/lib/three.js/Detector.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/3d/lib/three.js/TrackballControls.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/3d/lib/threex/THREEx.WindowResize.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/3d/lib/threex/THREEx.FullScreen.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/3d/lib/dat.gui.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/3d/ellipse.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/3d/ephemeris.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/3d/util.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/3d/main.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/3d/full3d_loader.js" %}"></script>
+
+     <div class="dg ac">
+   <div class="dg main a" style="width: 455px;margin-right: -100px">
+      <div style="width: 6px; margin-left: -3px; height: 224px; cursor: ew-resize; position: absolute;"></div>
+      <ul style="height: auto;">
+         <li class="cr function">
+            <div>
+               <span class="property-name">Eccentricity (E)</span>
+               <input id="e" type="text" value="0.08879027843646621" name="e"/>
+               
             </div>
-        </div>
-        <script src="https://code.jquery.com/jquery-2.2.3.min.js"   integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo="   crossorigin="anonymous"></script>
-        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-    </body>
+         </li>
+         <li class="cr function">
+            <div>
+               <span class="property-name">Inclination (I)</span>
+               <input id="i" type="text" value="2.768108067009298" name="i" />
+            </div>
+         </li>
+         <li class="cr function">
+            <div>
+               <span class="property-name">longitude of the ascending node (Ω)</span>
+               <input id="om" type="text" value="62.36399100210148" name="om" />             
+            </div>
+         </li>
+         <li class="cr function">
+            <div>
+               <span class="property-name">Argument of perihelion (W)</span>
+               <input id="w" type="text" value="300.6986330539765" name="w" />
+            </div>
+         </li>
+         <li class="cr function">
+            <div>
+               <span class="property-name">Semimajor axis (A)</span>
+               <input id="a" type="text" value="2.747666931600445" name="a" />
+            </div>
+         </li> 
+         <li class="cr function">
+            <div>
+               <span class="property-name">Epoch</span>
+               <input id="epoch" type="text" value="2457200.5" name="epoch" />
+            </div>
+         </li>       
+         <li class="cr function">
+            <div>
+               <span class="property-name">Mean anomaly (Ma)</span>
+               <input id="ma" type="text" value="220.1004135757952" name="ma" />
+            </div>
+         </li>  
+         <li class="cr function">
+            <div>
+               <span class="property-name">Period in days (P)</span>
+               <input id="p" type="text" value="1663.583320494612" name="p" />
+            </div>
+         </li>  
+         <li class="cr function">
+            <div>
+               <span class="property-name">Mean motion (n)</span>
+               <input id="n" type="text" value="0.2164003423002377" name="n" />
+            </div>
+         </li>           
+         <li class="cr function">
+            <div>
+               <span id="result"></span>
+               <input id="check" type="button" value="Check" style="float: right; margin-right: 116px" />
+            </div>
+         </li> 
+      <li class="cr function">
+            <div>
+               <!-- <a href="#" style="float: left; margin-left: 2px; color: #ffffff">About</a> -->
+               <a id="sun" href="javascript:void(0);" style="float: right; margin-right: 120px; color: #ffffff">Sun</a>
+               <a id="earth" href="javascript:void(0);" style="float: right; margin-right: 10px; color: #ffffff">Earth</a>
+            </div>
+       </li> 
+
+  <script type="text/javascript">
+  
+  $("#sun").click(function() {
+      window.arank.setSun();
+  });
+  
+  $("#earth").click(function() {
+      window.arank.setLock('earth');
+  });
+  
+  $("#check").click(function() {
+
+    $.ajax({
+        url : "check", // the endpoint
+        type : "POST", // http method
+        data : { 
+          a : $('#a').val(),
+          e : $('#e').val(),
+          w : $('#w').val(),
+          i : $('#i').val(),
+          om : $('#om').val(),
+        },
+
+        // handle a successful response
+        success : function(data) {
+            var asteroid = {
+                  full_name: '17071986 EugeneScherbina',
+                  epoch: parseFloat($('#epoch').val()),
+                  a: parseFloat($('#a').val()),
+                  e: parseFloat($('#e').val()),
+                  i: parseFloat($('#i').val()),
+                  w: parseFloat($('#w').val()),   // ARGUMENT of perihelion.  argument = longitude of perihelion - longitude of ascending node
+                  om: parseFloat($('#om').val()),  // long of ascending node
+                  ma: parseFloat($('#ma').val()),   // mean anomaly
+                  P: parseFloat($('#p').val()),
+                  n: parseFloat($('#n').val()),
+            };
+            
+            window.arank.addAsteroid(asteroid);
+            
+            if (data.pha === 0) {
+                $("#result").html("CLEAN (MOID: " + data.moid.toFixed(2) + ")");
+                $("#result").css('color', 'green');
+            } else {
+                $("#result").html("DANGEROUS (MOID: " + data.moid.toFixed(2) + ")");
+                $("#result").css('color', 'red');
+            }
+
+            console.log(data);
+        },
+
+        // handle a non-successful response
+        error : function(xhr,errmsg,err) {
+            $('#results').html("<div class='alert-box alert radius' data-alert>Oops! We have encountered an error: "+errmsg+
+                " <a href='#' class='close'>&times;</a></div>"); // add the error to the dom
+            console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+        }
+    });      
+  });
+    
+    $(function() {
+      var width = $(window).width();
+      var height = $(window).height();      
+
+      $("#container canvas").attr("width", width);
+      $("#container canvas").attr("height", height);
+
+      $("#userData").unbind('click');
+      $("#userData").on("click", function() {
+        var userData = $(this).val();
+
+        var userAsteroid = {
+          full_name: '17071986 EugeneScherbina',
+          epoch: 2457200.5,
+          a: 2.747666931600445,
+          e: 0.08879027843646621,
+          i: 2.768108067009298,
+
+          w: 300.6986330539765,   // ARGUMENT of perihelion.  argument = longitude of perihelion - longitude of ascending node
+          om: 62.36399100210148,  // long of ascending node
+          ma: 220.1004135757952,   // mean anomaly
+
+          P: 1663.583320494612,
+          n: 0.2164003423002377,
+        };
+
+      });
+    });
+  </script>
+  
+</body>
 </html>

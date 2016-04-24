@@ -10,7 +10,8 @@ https://docs.djangoproject.com/en/1.9/howto/deployment/wsgi/
 import os
 
 from django.core.wsgi import get_wsgi_application
+from django.contrib.staticfiles.handlers import StaticFilesHandler
 
 os.environ.setdefault("python manage.py startapp polls", "n2k_1.settings")
 
-application = get_wsgi_application()
+application = StaticFilesHandler(get_wsgi_application())
