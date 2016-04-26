@@ -1,6 +1,6 @@
 import sys, os, trace, multiprocessing
 import numpy as np
-#import pandas as pd
+import pandas as pd
 from numpy.linalg import norm
 import pickle  
 
@@ -120,15 +120,15 @@ if __name__ == '__main__':
     #database = pd.read_csv(database_path, sep=',', usecols=['a', 'e', 'i', 'w', 'om', 'q', 'H', 'neo', 'pha', 'moid'], low_memory=False)
 
     db_head = database[:10]
-    print "db_head:\n", db_head
+    #print "db_head:\n", db_head
 
     ### EXTRACT NEOS ###
     neo, num_neo = get_neo(database)
 
     ### RECALCULATE MOID BASED ON ORBITAL PARAMETERS ###
-    print "init MOID copmutation..."
+    # print "init MOID copmutation..."
     neo = calc_moid(neo)
-    print "MOID copmutation finished."
+    # print "MOID copmutation finished."
 
     ### ADD ASCENDING NODE DISTANCE ###
     # calc_rascend(neo)
@@ -164,9 +164,9 @@ if __name__ == '__main__':
     dumpObject(haz, './asteroid_data/haz_test.p')
     dumpObject(nohaz, './asteroid_data/nohaz_test.p')
 
-    print "Load finished."
-    print "number of hazardous asteroids in apollo group:", len(haz)
-    print "number of nonhazardous asteroids in apollo group:", len(nohaz)
+    # print "Load finished."
+    # print "number of hazardous asteroids in apollo group:", len(haz)
+    # print "number of nonhazardous asteroids in apollo group:", len(nohaz)
 
 
 

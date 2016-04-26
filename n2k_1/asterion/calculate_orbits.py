@@ -232,10 +232,10 @@ if __name__ == '__main__':
     # rx = get_rhor(tmin, a, e, w, i, om)
     # ry = get_rver(tmin, a, e, w, i, om)
     rx, ry = get_rxry(a, e, w, i, om)
-    print "rx, ry:", rx, ry
+    # print "rx, ry:", rx, ry
 
     moid = get_moid(a, e, w, i, om)
-    print "moid:", moid
+    # print "moid:", moid
 
 
     # vmin = get_rmin(a, e, w, i, om, direction="vertical")

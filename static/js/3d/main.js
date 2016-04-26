@@ -195,8 +195,8 @@
       return;
     }
     var $container = $(opts.container);
-    var containerHeight = $container.height();//$(window).height()/2;
-    var containerWidth = $container.width();  // $(window).width()
+    var containerHeight = $(window).height();
+    var containerWidth = $(window).width()
     renderer.setSize(containerWidth, containerHeight);
     opts.container.appendChild(renderer.domElement);
 
@@ -619,6 +619,7 @@
     var canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
+    
     var col = new THREE.Color(color);
 
     var context = canvas.getContext('2d');
@@ -740,7 +741,7 @@
   me.addAsteroid = function(asteroid){
     // todo: add object to added_objects
 
-    var asteroid_eugenescherbina = new Orbit3D(asteroid, {
+    var newAsteroid = new Orbit3D(asteroid, {
       color: 0xffffff,
       width: 1,
       jed: jed,
@@ -748,20 +749,21 @@
       texture_path: 'http://www.asterank.com/static/img/cloud4.png',   // not using loadTexture, no support for offline mode...
       display_color: new THREE.Color(0xffffff),
       particle_geometry: particle_system_geometry,
-      name: '17071986 EugeneScherbina'
+      name: asteroid.full_name
     });
 
-    added_objects.push(asteroid_eugenescherbina);
+    added_objects.push(newAsteroid);
 
-    feature_map['17071986 EugeneScherbina'] = {
-      'orbit': asteroid_eugenescherbina,
+    feature_map[newAsteroid.full_name] = {
+      'orbit': newAsteroid,
       'idx': added_objects.length
     };
 
     me.clearRankings();
     createParticleSystem();
 
-    setLock('17071986 EugeneScherbina');
+    clearLock();
+    setLock(newAsteroid.full_name);
   }
   
   me.setSun = function() {

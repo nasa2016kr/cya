@@ -1,12 +1,12 @@
 {% load staticfiles %}
 <html>
   <head>
-    <title>3D Interactive Asteroid Space Visualization - Asterank</title>
+    <title>Asterion - CYA</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
     <link href="static/css/full3d.css" rel="stylesheed">
-
+    <link rel="shortcut icon" href="static/favicon.png" type="image/png">
     <script>
       window.passthrough_vars = {
       }
@@ -16,6 +16,10 @@
     <style type="text/css">
       body {
         margin: 0px !important;
+      }
+      .cr div input {
+        margin-top: 3px;
+        width: 167px;
       }
     </style>
   </head>
@@ -144,7 +148,7 @@ void main() {
   <!-- three.js container -->
   <div id="container"></div>
   <!-- info on screen display -->
-  <div id="loading">
+  <div id="loading" style='position; absolute'>
     <!--<img src="/images/loader.gif"/> Loading <span id="loading-text"></span>...-->
     <img src="http://www.asterank.com/static/img/loader.gif"/> Loading asteroids from database...
   </div>
@@ -176,7 +180,7 @@ void main() {
   <script type="text/javascript" src="{% static "js/3d/main.js" %}"></script>
   <script type="text/javascript" src="{% static "js/3d/full3d_loader.js" %}"></script>
 
-     <div class="dg ac">
+  <div id="asteroidData" class="dg ac">
    <div class="dg main a" style="width: 455px;margin-right: -100px">
       <div style="width: 6px; margin-left: -3px; height: 224px; cursor: ew-resize; position: absolute;"></div>
       <ul style="height: auto;">
@@ -238,25 +242,84 @@ void main() {
          <li class="cr function">
             <div>
                <span id="result"></span>
-               <input id="check" type="button" value="Check" style="float: right; margin-right: 116px" />
+               <input id="check" type="button" value="Check" style="float: right; margin-right: 100px; margin-top : 3px" />
+            </div>
+         </li> 
+          <li class="cr function">
+            <div>
+               <span id="result"></span>
+               <input id="generateAsteroid" type="button" value="Generate asteroid" style="float: right; margin-right: 100px; margin-top : 3px" />
             </div>
          </li> 
       <li class="cr function">
             <div>
-               <!-- <a href="#" style="float: left; margin-left: 2px; color: #ffffff">About</a> -->
+               <a id="showAbout" href="javascript:void(0);" style="float: left; margin-left: 2px; color: #ffffff">About</a>
                <a id="sun" href="javascript:void(0);" style="float: right; margin-right: 120px; color: #ffffff">Sun</a>
                <a id="earth" href="javascript:void(0);" style="float: right; margin-right: 10px; color: #ffffff">Earth</a>
             </div>
        </li> 
+   </div>
+</div>
 
-  <script type="text/javascript">
+<div id="about" class="dg ac" style="display: none">
+   <div class="dg main a" style="width: 455px;margin-right: -100px">
+      <div style="width: 6px; margin-left: -3px; height: 224px; cursor: ew-resize; position: absolute;"></div>
+      <ul style="height: auto;">
+          <li class="cr function" style="height: auto">
+         <p style="width: 350px">The project aims at prediction of  undiscovered potentially hazardous asteroids' 
+         orbital parameters using machine learning and computer simulations.<br></p>
+         <p style="width: 200px">Contact info :</p>
+         <p style="width: 250px">Eugene Shcherbina (<a href="mailto:sylechristo@gmail.com"> sylechristo@gmail.com</a>) ASP.NET MVC Developer </p>
+         <p style="width: 200px">Vadym Pasko (<a href="mailto:keenon3d@gmail.com"> keenon3d@gmail.com</a>) Aerospace Engineer, Data Scientist</p>
+         <p style="width: 200px">Andriy Blakitnij (<a href="mailto:homzilla@gmail.com"> homzilla@gmail.com</a>) <br>IT Engineer</p>
+         </li>
+         <li class="cr function">
+            <div>
+               <a id="home" href="javascript:void(0);" style="float: left; margin-left: 2px; color: #ffffff">Go to project</a>
+            </div>
+       </li> 
+        </ul>
+        </div>
+ 
+</div>
+
+<script type="text/javascript">
+  
+  $("#showAbout").click(function() {
+      $("#asteroidData").hide();
+      $("#about").show();
+  });
   
   $("#sun").click(function() {
       window.arank.setSun();
+      $("#result").html("");
   });
+  
   
   $("#earth").click(function() {
       window.arank.setLock('earth');
+      $("#result").html("");
+  });
+  
+  $("#home").click(function() {
+      $("#about").hide();
+      $("#asteroidData").show();
+  });
+  
+  $("#generateAsteroid").click(function() {
+    $.get( "generate_asteroid", function( data ) {
+        console.log(data);
+        $("#epoch").val(data.epoch);
+        $("#a").val(data.a);
+        $("#e").val(data.e);
+        $("#a").val(data.a);
+        $("#i").val(data.i);
+        $("#ma").val(data.ma);
+        $("#n").val(data.n);
+        $("#om").val(data.om);
+        $("#p").val(data.p);
+        $("#w").val(data.w);
+    });
   });
   
   $("#check").click(function() {
@@ -275,7 +338,7 @@ void main() {
         // handle a successful response
         success : function(data) {
             var asteroid = {
-                  full_name: '17071986 EugeneScherbina',
+                  full_name: Math.random().toString(),
                   epoch: parseFloat($('#epoch').val()),
                   a: parseFloat($('#a').val()),
                   e: parseFloat($('#e').val()),
@@ -291,7 +354,7 @@ void main() {
             
             if (data.pha === 0) {
                 $("#result").html("CLEAN (MOID: " + data.moid.toFixed(2) + ")");
-                $("#result").css('color', 'green');
+                $("#result").css('color', 'lightgreen');
             } else {
                 $("#result").html("DANGEROUS (MOID: " + data.moid.toFixed(2) + ")");
                 $("#result").css('color', 'red');
@@ -309,35 +372,7 @@ void main() {
     });      
   });
     
-    $(function() {
-      var width = $(window).width();
-      var height = $(window).height();      
-
-      $("#container canvas").attr("width", width);
-      $("#container canvas").attr("height", height);
-
-      $("#userData").unbind('click');
-      $("#userData").on("click", function() {
-        var userData = $(this).val();
-
-        var userAsteroid = {
-          full_name: '17071986 EugeneScherbina',
-          epoch: 2457200.5,
-          a: 2.747666931600445,
-          e: 0.08879027843646621,
-          i: 2.768108067009298,
-
-          w: 300.6986330539765,   // ARGUMENT of perihelion.  argument = longitude of perihelion - longitude of ascending node
-          om: 62.36399100210148,  // long of ascending node
-          ma: 220.1004135757952,   // mean anomaly
-
-          P: 1663.583320494612,
-          n: 0.2164003423002377,
-        };
-
-      });
-    });
-  </script>
+</script>
   
 </body>
 </html>

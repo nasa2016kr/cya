@@ -24,6 +24,20 @@ def home(request):
         'resultClass': resultClass,
         'result': result
     })
+    
+def generate_asteroid(request):
+    response_data = {}
+    response_data['e'] = 1
+    response_data['i'] = 2
+    response_data['om'] = 3
+    response_data['w'] = 4
+    response_data['a'] = 5
+    response_data['epoch'] = 6
+    response_data['ma'] = 7
+    response_data['p'] = 8
+    response_data['n'] = 9
+    
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 @csrf_exempt    
 def check(request):
