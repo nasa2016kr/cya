@@ -1,10 +1,12 @@
 import sys, os, trace, multiprocessing
 import numpy as np
-import pandas as pd
+# import pandas as pd
 from numpy.linalg import norm
 import pickle  
 
 import calculate_orbits as co
+
+
 
 
 def loadObject(fname):
@@ -117,18 +119,21 @@ if __name__ == '__main__':
                     "./asteroid_data/latest_fulldb.csv")
     # database = pd.read_csv(database_path, sep=',', 
     #            usecols=[0,4,6,7,8,9,15,18,19,32,33,34,35,36,37,43,44,45,46,47,48,49])
-    #database = pd.read_csv(database_path, sep=',', usecols=['a', 'e', 'i', 'w', 'om', 'q', 'H', 'neo', 'pha', 'moid'], low_memory=False)
+    database = pd.read_csv(database_path, sep=',', usecols=['a', 'e', 'i', 'w', 'om', 'q',
+                                                            'H', 'neo', 'pha', 'moid', 'per',
+                                                            'n', 'ma', 'epoch'],
+                                                            low_memory=False)
 
     db_head = database[:10]
-    #print "db_head:\n", db_head
+    print "db_head:\n", db_head
 
     ### EXTRACT NEOS ###
     neo, num_neo = get_neo(database)
 
     ### RECALCULATE MOID BASED ON ORBITAL PARAMETERS ###
-    # print "init MOID copmutation..."
+    print "init MOID copmutation..."
     neo = calc_moid(neo)
-    # print "MOID copmutation finished."
+    print "MOID copmutation finished."
 
     ### ADD ASCENDING NODE DISTANCE ###
     # calc_rascend(neo)
@@ -152,10 +157,13 @@ if __name__ == '__main__':
     # apollos_cuti2 = apollos_cuti[apollos_cuti.i < 15.0]
     # apollos_cute = apollos[apollos.e < 0.5]
     # apollos_cuti2 = apollos_cuti[apollos_cuti.i < 15.0]
-    apollos, num_apollos = cutoff_outcasts(apollos)
+    # apollos, num_apollos = cutoff_outcasts(apollos)
+
+    neos, num_neos = cutoff_outcasts(neo)
 
     ### REMOVE DIM ASTEROIDS ###
-    bright = cut_magnitude(apollos)
+    # bright = cut_magnitude(apollos)
+    bright = cut_magnitude(neos)
 
     ### SPLIT ASTEROIDS INTO BY PHA FLAG ###
     # haz, nohaz = get_hazMOID(apollos_cuti)
@@ -164,9 +172,9 @@ if __name__ == '__main__':
     dumpObject(haz, './asteroid_data/haz_test.p')
     dumpObject(nohaz, './asteroid_data/nohaz_test.p')
 
-    # print "Load finished."
-    # print "number of hazardous asteroids in apollo group:", len(haz)
-    # print "number of nonhazardous asteroids in apollo group:", len(nohaz)
+    print "Load finished."
+    print "number of hazardous asteroids in apollo group:", len(haz)
+    print "number of nonhazardous asteroids in apollo group:", len(nohaz)
 
 
 

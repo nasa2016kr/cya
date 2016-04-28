@@ -5,6 +5,7 @@ import numpy as np
 import json
 import asterion.calculate_orbits as co
 import asterion.read_database as rd
+import asterion.generate_orbits as go
 
 def home(request):
     h = request.POST.get('h', '')
@@ -26,16 +27,17 @@ def home(request):
     })
     
 def generate_asteroid(request):
+    params = go.gen_rand_params()
     response_data = {}
-    response_data['e'] = 1
-    response_data['i'] = 2
-    response_data['om'] = 3
-    response_data['w'] = 4
-    response_data['a'] = 5
-    response_data['epoch'] = 6
-    response_data['ma'] = 7
-    response_data['p'] = 8
-    response_data['n'] = 9
+    response_data['e'] = params['e'][0]
+    response_data['i'] = params['i'][0]
+    response_data['om'] = params['om'][0]
+    response_data['w'] = params['w'][0]
+    response_data['a'] = params['a'][0]
+    response_data['epoch'] = params['epoch'][0]
+    response_data['ma'] = params['ma'][0]
+    response_data['p'] = params['per'][0]
+    response_data['n'] = params['n'][0]
     
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
