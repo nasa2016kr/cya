@@ -195,8 +195,8 @@
       return;
     }
     var $container = $(opts.container);
-    var containerHeight = $(window).height();
-    var containerWidth = $(window).width()
+    var containerHeight = window.innerHeight;
+    var containerWidth = window.innerWidth;
     renderer.setSize(containerWidth, containerHeight);
     opts.container.appendChild(renderer.domElement);
 
