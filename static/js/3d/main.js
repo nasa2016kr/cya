@@ -369,6 +369,7 @@
     cam.position.set(opts.default_camera_position[0], opts.default_camera_position[1],
         opts.default_camera_position[2]);
   }
+  
 
   function setHighlight(full_name) {
     // Colors the object differently, but doesn't follow it.
@@ -736,6 +737,13 @@
       return texture;
     }
     return THREE.ImageUtils.loadTexture(path);
+  }
+  
+  me.getAsteroid = function(full_name) {
+    return $.grep(window.arank.getAsteroids(), function(e){ return e.full_name == full_name; });
+  }
+  me.getAsteroids = function() {
+    return added_objects.map(function(a) { return a.eph} )
   }
 
   me.addAsteroid = function(asteroid){

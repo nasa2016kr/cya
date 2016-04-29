@@ -8,23 +8,24 @@ import asterion.read_database as rd
 import asterion.generate_orbits as go
 
 def home(request):
-    h = request.POST.get('h', '')
     
-    resultClass = ''
-    result = ''
-    if (h != ''):
-        if (h == '1'):
-            resultClass = "resultSuccess"
-            result = 'CLEAN'
-        else:
-            resultClass = "resultFail"
-            result = 'RISK: 82.4%'
+    # t_json = open('ast4005.json')
+    # p_json = json.load(t_json)
+    
+    # for item in p_json:
+    #     i_r = np.radians(item['i'])
+    #     om_r = np.radians(item['om'])
+    #     w_r = np.radians(item['w'])
+        
+    #     moid = co.get_moid(item['a'], item['e'], w_r, i_r, om_r)
+        
+    #     response_data = {}
+    #     response_data['moid'] = moid
+    #     response_data['pha'] = 1 if (moid <= 0.05) else 0
+    
+    
 
-    return render(request, "index.html", {
-        'h': h,
-        'resultClass': resultClass,
-        'result': result
-    })
+    return render(request, "index.html")
     
 def generate_asteroid(request):
     params = go.gen_rand_params()
